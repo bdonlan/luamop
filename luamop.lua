@@ -101,6 +101,28 @@ function ClassClass.BUILD(self, args)
 	__blessClass(self)
 end
 
+function ClassClass.around(self, name, wrapper)
+	local base = self:search(name)
+	local function impl(...)
+		return wrapper(base, ...)
+	end
+	self.methods[name] = impl
+end
+
+function ClassClass.before(self, name, wrapper)
+	self:around(name, function(base, ...)
+		wrapper(...)
+		return base(...)
+	end)
+end
+
+function ClassClass.after(self, name, wrapper)
+	self:around(name, function(base, ...)
+		local ret = base(...)
+		wrapper(ret, ...)
+		return ret
+	end)
+end
 --print("Creating a new class using ClassClass=", ClassClass)
 Animal = ClassClass:newinstance()
 
@@ -116,13 +138,21 @@ function Animal.BUILD(self, args)
 	end
 end
 
-function Animal.bark(self)
+function Animal.barkstr(self, args)
 	local str = "The " .. self:getSpecies()
 	if self.name then
 		str = str .. " named " .. self.name
 	end
-	str = str .. " barks!"
-	print(str)
+	str = str .. " barks"
+	if args and args.target then
+		str = str .. " at " .. args.target
+	end
+	str = str .. "!"
+	return str
+end
+
+function Animal.bark(self, ...)
+	print(self:barkstr(...))
 end
 
 rawset(Animal, "newspecies", function(self, speciesname)
@@ -133,8 +163,19 @@ rawset(Animal, "newspecies", function(self, speciesname)
 	return class
 end)
 
+Wolf = Animal:newspecies("wolf")
+Wolf:around("barkstr", function(base, self, ...)
+	local retval = base(self, ...)
+	retval = string.gsub(retval, "barks", "howls")
+	return retval
+end)
+lupin = Wolf:newinstance{name = "Lupin"}
+lupin:bark{target = "the moon"}
 
 Dog = Animal:newspecies("dog")
+Dog:after("bark", function(self, ...)
+	print("It then slobbers on your leg.")
+end)
 fido = Dog:newinstance{name = "Fido"}
 fido:bark()
 Dog:newinstance():bark()
@@ -144,4 +185,11 @@ yogi = Bear:newinstance{name = "Yogi"}
 yogi:bark()
 fido:bark()
 
-Animal:bark() -- should fail as bark is an instance method
+Grue = Animal:newspecies("grue")
+Grue:before("bark", function(self, ...)
+	print("It is dark.");
+end)
+grue = Grue:newinstance()
+grue:bark()
+
+-- Animal:bark() -- should fail as bark is an instance method
