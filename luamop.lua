@@ -122,7 +122,6 @@ function Animal.getSpecies(self)
 end
 
 function Animal.BUILD(self, args)
-	self.species = self:getSpecies()
 	if args and args.name then
 		self.name = args.name
 	else
@@ -133,7 +132,7 @@ end
 Animal.fields.name = "unnamed"
 
 function Animal.bark(self)
-	local str = "The " .. self.species
+	local str = "The " .. self:getSpecies()
 	if self.name then
 		str = str .. " named " .. self.name
 	end
