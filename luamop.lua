@@ -121,28 +121,42 @@ function Animal.getSpecies(self)
 	return "animal"
 end
 
-function Animal.BUILD(self)
+function Animal.BUILD(self, args)
 	self.species = self:getSpecies()
-	self.name = false
+	if args and args.name then
+		self.name = args.name
+	else
+		self.name = false
+	end
 end
 
 Animal.fields.name = "unnamed"
 
 function Animal.bark(self)
-	print("The " .. self.name .. " barks!")
+	local str = "The " .. self.species
+	if self.name then
+		str = str .. " named " .. self.name
+	end
+	str = str .. " barks!"
+	print(str)
 end
 
-dog = Animal:newinstance()
-print(dog.name)
-dog.name = "dog"
-print(dog.name)
-dog:bark()
+rawset(Animal, "newspecies", function(self, speciesname)
+	local class = getClass(self):newinstance{super = self}
+	function class.getSpecies(self)
+		return speciesname
+	end
+	return class
+end)
 
-bear = Animal:newinstance()
-print(bear.name)
-bear.name = "bear"
-print(bear.name)
-bear:bark()
-print(dog.name)
+
+Dog = Animal:newspecies("dog")
+fido = Dog:newinstance{name = "Fido"}
+fido:bark()
+
+Bear = Animal:newspecies("bear")
+yogi = Bear:newinstance{name = "Yogi"}
+yogi:bark()
+fido:bark()
 
 Animal:bark() -- should fail as bark is an instance method
