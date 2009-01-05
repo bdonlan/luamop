@@ -30,8 +30,7 @@ end
 ObjectClass = {
 	name = "ObjectClass",
 	methods = {
-	},
-	fields = {}
+	}
 }
 ObjectClass.super = ObjectClass
 
@@ -53,12 +52,6 @@ ClassClass = {
 		search = __classSearch
 	},
 	search = __classSearch,
-	fields = {
-		methods = nil,
-		super = nil,
-		fields = nil,
-		name = "Unnamed",
-	},
 	super = ObjectClass
 }
 
@@ -83,18 +76,6 @@ end
 function ClassClass.newinstance(class, ...)
 	--print("Instantiating ", class)
 	local inst = {}
-	local classp = class
-	while classp do
-		--print("class=", classp, " fields=", classp.fields)
-		for k, v in pairs(classp.fields) do
-			inst[k] = v
-		end
-		if classp.super == classp then
-			classp = nil
-		else
-			classp = classp.super
-		end
-	end
 
 	__blessInstance(class, inst)
 	inst:BUILDALL(...)
@@ -110,9 +91,13 @@ function ClassClass.BUILD(self, args)
 	if not(super) then
 		super = ObjectClass
 	end
+	if args.name then
+		self.name = name
+	else
+		self.name = "Unnamed"
+	end
 	self.super = super
 	self.methods = {}
-	self.fields = {}
 	__blessClass(self)
 end
 
@@ -130,8 +115,6 @@ function Animal.BUILD(self, args)
 		self.name = false
 	end
 end
-
-Animal.fields.name = "unnamed"
 
 function Animal.bark(self)
 	local str = "The " .. self:getSpecies()
@@ -154,6 +137,7 @@ end)
 Dog = Animal:newspecies("dog")
 fido = Dog:newinstance{name = "Fido"}
 fido:bark()
+Dog:newinstance():bark()
 
 Bear = Animal:newspecies("bear")
 yogi = Bear:newinstance{name = "Yogi"}
