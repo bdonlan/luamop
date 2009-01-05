@@ -11,21 +11,9 @@ end
 
 function __inheritSearch(self, name)
 	local class = getClass(self)
-	while class do
-		--print("Search ", class.name, " for ", name, " on ", self)
-		local impl = class.methods[name]
-		if impl then
-			self[name] = impl
-			return impl
-		end
-		if class.super == class then
-			class = nil
-		else
-			--print("Super of ", class, "(", class.name, ") is ", class.super, "(", class.super.name, ")")
-			class = class.super
-		end
-	end
-	return nil
+	local impl = class:search(name)
+	self[name] = impl
+	return impl
 end
 
 function __blessInstance(class, object)
@@ -47,10 +35,24 @@ ObjectClass = {
 }
 ObjectClass.super = ObjectClass
 
+__classSearch = function(class, name)
+	local impl = class.methods[name]
+	if impl then
+		return impl
+	end
+	if class.super == class then
+		return nil
+	else
+		return class.super:search(name)
+	end
+end
+
 ClassClass = {
 	name = "ClassClass",
 	methods = {
+		search = __classSearch
 	},
+	search = __classSearch,
 	fields = {
 		methods = nil,
 		super = nil,
